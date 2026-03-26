@@ -184,8 +184,8 @@ Dispatcher::Device::Device(Dispatcher & parent, cl_context & clContext, cl_progr
 	m_memInversedNegativeDoubleGy(clContext, m_clQueue, CL_MEM_READ_WRITE | CL_MEM_HOST_NO_ACCESS, size, true),
 	m_memPrevLambda(clContext, m_clQueue, CL_MEM_READ_WRITE | CL_MEM_HOST_NO_ACCESS, size, true),
 	m_memResult(clContext, m_clQueue, CL_MEM_READ_WRITE | CL_MEM_HOST_READ_ONLY, PROFANITY_MAX_SCORE + 1),
-	m_memData1(clContext, m_clQueue, CL_MEM_READ_ONLY | CL_MEM_HOST_WRITE_ONLY, 20),
-	m_memData2(clContext, m_clQueue, CL_MEM_READ_ONLY | CL_MEM_HOST_WRITE_ONLY, 20),
+	m_memData1(clContext, m_clQueue, CL_MEM_READ_ONLY | CL_MEM_HOST_WRITE_ONLY, 40),
+	m_memData2(clContext, m_clQueue, CL_MEM_READ_ONLY | CL_MEM_HOST_WRITE_ONLY, 40),
 	m_clSeed(createSeed()),
 	m_clSeedX(clSeedX),
 	m_clSeedY(clSeedY),
@@ -288,7 +288,7 @@ void Dispatcher::init() {
 
 void Dispatcher::initBegin(Device & d) {
 	// Set mode data
-	for (auto i = 0; i < 20; ++i) {
+	for (auto i = 0; i < 40; ++i) {
 		d.m_memData1[i] = m_mode.data1[i];
 		d.m_memData2[i] = m_mode.data2[i];
 	}

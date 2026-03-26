@@ -156,6 +156,7 @@ int main(int argc, char * * argv) {
 		bool bModeNumbers = false;
 		std::string strModeLeading;
 		std::string strModeMatching;
+		std::string strModeFuzzy;
 		std::string strPublicKey;
 		bool bModeLeadingRange = false;
 		bool bModeRange = false;
@@ -178,6 +179,7 @@ int main(int argc, char * * argv) {
 		argp.addSwitch('3', "numbers", bModeNumbers);
 		argp.addSwitch('4', "leading", strModeLeading);
 		argp.addSwitch('5', "matching", strModeMatching);
+		argp.addSwitch('F', "fuzzy", strModeFuzzy);
 		argp.addSwitch('6', "leading-range", bModeLeadingRange);
 		argp.addSwitch('7', "range", bModeRange);
 		argp.addSwitch('8', "mirror", bModeMirror);
@@ -217,6 +219,8 @@ int main(int argc, char * * argv) {
 			mode = Mode::leading(strModeLeading.front());
 		} else if (!strModeMatching.empty()) {
 			mode = Mode::matching(strModeMatching);
+		} else if (!strModeFuzzy.empty()) {
+			mode = Mode::fuzzy(strModeFuzzy);
 		} else if (bModeLeadingRange) {
 			mode = Mode::leadingRange(rangeMin, rangeMax);
 		} else if (bModeRange) {

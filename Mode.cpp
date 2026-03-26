@@ -2,7 +2,8 @@
 #include <stdexcept>
 
 Mode::Mode() : score(0) {
-
+	std::fill(data1, data1 + sizeof(data1), cl_uchar(0));
+	std::fill(data2, data2 + sizeof(data2), cl_uchar(0));
 }
 
 Mode Mode::benchmark() {
@@ -35,6 +36,59 @@ static std::string::size_type hexValue(char c) {
 	}
 
 	return ret;
+}
+
+// Fuzzy matching: pattern format per nibble position:
+//   0-9,a-f = exact hex (one bit set in bitmask)
+//   X = wildcard (bitmask = 0, skip)
+//   [chars] = fuzzy set, e.g. [8b6] = accept 8, b, or 6
+// data1[i] = low byte of 16-bit bitmask for nibble i (bits 0-7 = hex 0-7)
+// data2[i] = high byte of 16-bit bitmask for nibble i (bits 0-7 = hex 8-f)
+Mode Mode::fuzzy(const std::string strPattern) {
+	Mode r;
+	r.name = "fuzzy";
+	r.kernel = "profanity_score_fuzzy";
+
+	std::fill(r.data1, r.data1 + sizeof(r.data1), cl_uchar(0));
+	std::fill(r.data2, r.data2 + sizeof(r.data2), cl_uchar(0));
+
+	int nibbleIdx = 0;
+	size_t i = 0;
+	while (i < strPattern.size() && nibbleIdx < 40) {
+		if (strPattern[i] == '[') {
+			// Parse bracket group: [8b6] etc
+			++i;
+			cl_ushort mask = 0;
+			while (i < strPattern.size() && strPattern[i] != ']') {
+				auto val = hexValueNoException(strPattern[i]);
+				if (val != std::string::npos) {
+					mask |= (1 << val);
+				}
+				++i;
+			}
+			if (i < strPattern.size()) ++i; // skip ']'
+			r.data1[nibbleIdx] = mask & 0xFF;
+			r.data2[nibbleIdx] = (mask >> 8) & 0xFF;
+			++nibbleIdx;
+		} else if (strPattern[i] == 'X' || strPattern[i] == 'x') {
+			// Wildcard - bitmask stays 0
+			++nibbleIdx;
+			++i;
+		} else {
+			auto val = hexValueNoException(strPattern[i]);
+			if (val != std::string::npos) {
+				// Exact match - single bit set
+				cl_ushort mask = (1 << val);
+				r.data1[nibbleIdx] = mask & 0xFF;
+				r.data2[nibbleIdx] = (mask >> 8) & 0xFF;
+				++nibbleIdx;
+			}
+			++i;
+		}
+	}
+
+	r.score = nibbleIdx; // max possible score
+	return r;
 }
 
 Mode Mode::matching(const std::string strHex) {

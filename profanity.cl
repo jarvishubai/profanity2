@@ -739,6 +739,35 @@ __kernel void profanity_score_matching(__global mp_number * const pInverse, __gl
 	profanity_result_update(id, hash, pResult, score, scoreMax);
 }
 
+// Fuzzy matching kernel: per-nibble 16-bit bitmask matching
+// data1[i] = low byte of bitmask for nibble i (bits 0-7 = hex digits 0-7)
+// data2[i] = high byte of bitmask for nibble i (bits 0-7 = hex digits 8-f)
+// Score = count of nibble positions where the hash digit is in the acceptable set
+__kernel void profanity_score_fuzzy(__global mp_number * const pInverse, __global result * const pResult, __constant const uchar * const data1, __constant const uchar * const data2, const uchar scoreMax) {
+	const size_t id = get_global_id(0);
+	__global const uchar * const hash = pInverse[id].d;
+	int score = 0;
+
+	for (int i = 0; i < 20; ++i) {
+		const uchar hi = (hash[i] >> 4) & 0x0F;
+		const uchar lo = hash[i] & 0x0F;
+
+		// High nibble (position i*2)
+		const ushort maskHi = (ushort)data1[i * 2] | ((ushort)data2[i * 2] << 8);
+		if (maskHi > 0 && (maskHi & ((ushort)1 << hi))) {
+			++score;
+		}
+
+		// Low nibble (position i*2 + 1)
+		const ushort maskLo = (ushort)data1[i * 2 + 1] | ((ushort)data2[i * 2 + 1] << 8);
+		if (maskLo > 0 && (maskLo & ((ushort)1 << lo))) {
+			++score;
+		}
+	}
+
+	profanity_result_update(id, hash, pResult, score, scoreMax);
+}
+
 __kernel void profanity_score_leading(__global mp_number * const pInverse, __global result * const pResult, __constant const uchar * const data1, __constant const uchar * const data2, const uchar scoreMax) {
 	const size_t id = get_global_id(0);
 	__global const uchar * const hash = pInverse[id].d;

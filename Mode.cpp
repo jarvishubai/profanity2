@@ -87,7 +87,7 @@ Mode Mode::fuzzy(const std::string strPattern) {
 		}
 	}
 
-	r.score = nibbleIdx; // max possible score
+	r.score = 0; // start accepting any score > 0 (like matching mode)
 	return r;
 }
 
